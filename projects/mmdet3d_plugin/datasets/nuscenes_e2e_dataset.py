@@ -34,7 +34,7 @@ from .data_utils.data_utils import lidar_nusc_box_to_global, obtain_map_info, ou
 from nuscenes.prediction import convert_local_coords_to_global
 
 
-@DATASETS.register_module()
+@DATASETS.register_module(force=True)
 class NuScenesE2EDataset(NuScenesDataset):
     r"""NuScenes E2E Dataset.
 
@@ -89,7 +89,8 @@ class NuScenesE2EDataset(NuScenesDataset):
         self.eval_mod = eval_mod
 
         self.use_nonlinear_optimizer = use_nonlinear_optimizer
-
+        # print('#########dataroot', self.data_root) # data/nuscenes
+        # exit()
         self.nusc = NuScenes(version=self.version,
                              dataroot=self.data_root, verbose=True)
 
@@ -428,7 +429,7 @@ class NuScenesE2EDataset(NuScenesDataset):
                 - ann_info (dict): Annotation info.
         """
         info = self.data_infos[index]
-
+        # print(f"data_root: {self.data_root}")
         # semantic format
         lane_info = self.lane_infos[index] if self.lane_infos else None
         # panoptic format
@@ -517,6 +518,10 @@ class NuScenesE2EDataset(NuScenesDataset):
             lidar2cam_rts = []
             cam_intrinsics = []
             for cam_type, cam_info in info['cams'].items():
+                # print(f"Original cam_info['data_path']: {cam_info['data_path']}")
+                cam_info['data_path'] = cam_info['data_path'].replace("./data/nuscenes", "data/nuscenes")
+                # print(f"Modified cam_info['data_path']: {cam_info['data_path']}")
+
                 image_paths.append(cam_info['data_path'])
                 # obtain lidar to image transformation matrix
                 lidar2cam_r = np.linalg.inv(cam_info['sensor2lidar_rotation'])

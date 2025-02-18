@@ -19,7 +19,7 @@ from .occ_head_plugin import MLP, BevFeatureSlicer, SimpleConv2d, CVT_Decoder, B
 def _get_clones(module, N):
     return nn.ModuleList([copy.deepcopy(module) for i in range(N)])
 
-@HEADS.register_module()
+@HEADS.register_module(force=True)
 class OccHead(BaseModule):
     def __init__(self, 
                  # General

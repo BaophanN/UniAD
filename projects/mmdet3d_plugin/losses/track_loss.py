@@ -58,7 +58,7 @@ def accuracy(output, target, topk=(1, )):
     return res
 
 
-@LOSSES.register_module()
+@LOSSES.register_module(force=True)
 class ClipMatcher(nn.Module):
     def __init__(
             self,

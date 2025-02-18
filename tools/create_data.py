@@ -80,6 +80,8 @@ parser.add_argument(
 args = parser.parse_args()
 
 if __name__ == '__main__':
+    args.version = 'v1.0-mini'
+    args.dataset = 'nuscenes'
     if args.dataset == 'nuscenes' and args.version != 'v1.0-mini':
         train_version = f'{args.version}-trainval'
         nuscenes_data_prep(

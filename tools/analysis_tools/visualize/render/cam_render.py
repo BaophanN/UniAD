@@ -31,9 +31,16 @@ class CameraRender(BaseRender):
         self.cams = CAM_NAMES
         self.show_gt_boxes = show_gt_boxes
 
+    # def get_axis(self, index):
+    #     """Retrieve the corresponding axis based on the index."""
+    #     return self.axes[index//3, index % 3]
+
     def get_axis(self, index):
         """Retrieve the corresponding axis based on the index."""
-        return self.axes[index//3, index % 3]
+        if isinstance(self.axes, np.ndarray):  # If multiple subplots exist
+            return self.axes[index//3, index % 3]
+        else:  # Single subplot case
+            return self.axes
 
     def project_to_cam(self,
                        agent_prediction_list,
@@ -91,11 +98,12 @@ class CameraRender(BaseRender):
         """Load and annotate image based on the provided path."""
         sample = nusc.get('sample', sample_token)
         for i, cam in enumerate(self.cams):
-            sample_data_token = sample['data'][cam]
-            data_path, _, _, _, _ = self.get_image_info(
-                sample_data_token, nusc)
-            image = self.load_image(data_path, cam)
-            self.update_image(image, i, cam)
+            if cam == "CAM_FRONT":
+                sample_data_token = sample['data'][cam]
+                data_path, _, _, _, _ = self.get_image_info(
+                    sample_data_token, nusc)
+                image = self.load_image(data_path, cam)
+                self.update_image(image,0,cam)
 
     def load_image(self, data_path, cam):
         """Update the axis of the plot with the provided image."""
@@ -121,28 +129,29 @@ class CameraRender(BaseRender):
         lidar_cs_record = nusc.get('calibrated_sensor', nusc.get(
             'sample_data', sample['data']['LIDAR_TOP'])['calibrated_sensor_token'])
         for i, cam in enumerate(self.cams):
-            sample_data_token = sample['data'][cam]
-            box_list, tr_id_list, camera_intrinsic, imsize = self.project_to_cam(
-                predicted_agent_list, sample_data_token, nusc, lidar_cs_record)
-            for j, box in enumerate(box_list):
-                if box.is_sdc:
-                    continue
-                tr_id = tr_id_list[j]
-                if tr_id is None:
-                    tr_id = 0
-                c = color_mapping[tr_id % len(color_mapping)]
-                box.render(
-                    self.axes[i//3, i % 3], view=camera_intrinsic, normalize=True, colors=(c, c, c))
-            # plot gt
-            if self.show_gt_boxes:
-                data_path, boxes, camera_intrinsic = nusc.get_sample_data(
-                    sample_data_token, selected_anntokens=sample['anns'])
-                for j, box in enumerate(boxes):
-                    c = [0, 1, 0]
+            if cam == "CAM_FRONT":
+                sample_data_token = sample['data'][cam]
+                box_list, tr_id_list, camera_intrinsic, imsize = self.project_to_cam(
+                    predicted_agent_list, sample_data_token, nusc, lidar_cs_record)
+                for j, box in enumerate(box_list):
+                    if box.is_sdc:
+                        continue
+                    tr_id = tr_id_list[j]
+                    if tr_id is None:
+                        tr_id = 0
+                    c = color_mapping[tr_id % len(color_mapping)]
                     box.render(
-                        self.axes[i//3, i % 3], view=camera_intrinsic, normalize=True, colors=(c, c, c))
-            self.axes[i//3, i % 3].set_xlim(0, imsize[0])
-            self.axes[i//3, i % 3].set_ylim(imsize[1], 0)
+                        self.axes, view=camera_intrinsic, normalize=True, colors=(c, c, c))
+                # plot gt
+                if self.show_gt_boxes:
+                    data_path, boxes, camera_intrinsic = nusc.get_sample_data(
+                        sample_data_token, selected_anntokens=sample['anns'])
+                    for j, box in enumerate(boxes):
+                        c = [0, 1, 0]
+                        box.render(
+                            self.axes, view=camera_intrinsic, normalize=True, colors=(c, c, c))
+                self.axes.set_xlim(0, imsize[0])
+                self.axes.set_ylim(imsize[1], 0)
 
     def render_pred_traj(self, predicted_agent_list, sample_token, nusc, render_sdc=False, points_per_step=10):
         """Render predicted trajectories."""
@@ -150,38 +159,38 @@ class CameraRender(BaseRender):
         lidar_cs_record = nusc.get('calibrated_sensor', nusc.get(
             'sample_data', sample['data']['LIDAR_TOP'])['calibrated_sensor_token'])
         for i, cam in enumerate(self.cams):
-            sample_data_token = sample['data'][cam]
-            box_list, tr_id_list, camera_intrinsic, imsize = self.project_to_cam(
-                predicted_agent_list, sample_data_token, nusc, lidar_cs_record, project_traj=True, cam=cam)
-            for j, box in enumerate(box_list):
-                traj_points = box.pred_traj[:, :3]
+            if cam == "CAM_FRONT":
+                sample_data_token = sample['data'][cam]
+                box_list, tr_id_list, camera_intrinsic, imsize = self.project_to_cam(
+                    predicted_agent_list, sample_data_token, nusc, lidar_cs_record, project_traj=True, cam=cam)
+                for j, box in enumerate(box_list):
+                    traj_points = box.pred_traj[:, :3]
 
-                total_steps = (len(traj_points)-1) * points_per_step + 1
-                total_xy = np.zeros((total_steps, 3))
-                for k in range(total_steps-1):
-                    unit_vec = traj_points[k//points_per_step +
-                                           1] - traj_points[k//points_per_step]
-                    total_xy[k] = (k/points_per_step - k//points_per_step) * \
-                        unit_vec + traj_points[k//points_per_step]
-                in_range_mask = total_xy[:, 2] > 0.1
-                traj_points = view_points(
-                    total_xy.T, camera_intrinsic, normalize=True)[:2, :]
-                traj_points = traj_points[:2, in_range_mask]
-                if box.is_sdc:
-                    if render_sdc:
-                        self.axes[i//3, i % 3].scatter(
-                            traj_points[0], traj_points[1], color=(1, 0.5, 0), s=150)
+                    total_steps = (len(traj_points)-1) * points_per_step + 1
+                    total_xy = np.zeros((total_steps, 3))
+                    for k in range(total_steps-1):
+                        unit_vec = traj_points[k//points_per_step +
+                                            1] - traj_points[k//points_per_step]
+                        total_xy[k] = (k/points_per_step - k//points_per_step) * \
+                            unit_vec + traj_points[k//points_per_step]
+                    in_range_mask = total_xy[:, 2] > 0.1
+                    traj_points = view_points(
+                        total_xy.T, camera_intrinsic, normalize=True)[:2, :]
+                    traj_points = traj_points[:2, in_range_mask]
+                    if box.is_sdc:
+                        if render_sdc:
+                            self.axes.scatter(
+                                traj_points[0], traj_points[1], color=(1, 0.5, 0), s=150)
+                        else:
+                            continue
                     else:
-                        continue
-                else:
-                    tr_id = tr_id_list[j]
-                    if tr_id is None:
-                        tr_id = 0
-                    c = color_mapping[tr_id % len(color_mapping)]
-                    self.axes[i//3, i %
-                              3].scatter(traj_points[0], traj_points[1], color=c, s=15)
-            self.axes[i//3, i % 3].set_xlim(0, imsize[0])
-            self.axes[i//3, i % 3].set_ylim(imsize[1], 0)
+                        tr_id = tr_id_list[j]
+                        if tr_id is None:
+                            tr_id = 0
+                        c = color_mapping[tr_id % len(color_mapping)]
+                        self.axes.scatter(traj_points[0], traj_points[1], color=c, s=15)
+                self.axes.set_xlim(0, imsize[0])
+                self.axes.set_ylim(imsize[1], 0)
 
     def get_image_info(self, sample_data_token, nusc):
         """Retrieve image information."""

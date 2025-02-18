@@ -21,7 +21,7 @@ from projects.mmdet3d_plugin.core.bbox.util import normalize_bbox
 from mmcv.runner import force_fp32, auto_fp16
 
 
-@HEADS.register_module()
+@HEADS.register_module(force=True)
 class BEVFormerTrackHead(DETRHead):
     """Head of Detr3D.
     Args:

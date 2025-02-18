@@ -20,7 +20,7 @@ from einops import rearrange
 from mmdet.models.utils.transformer import inverse_sigmoid
 from ..dense_heads.track_head_plugin import MemoryBank, QueryInteractionModule, Instances, RuntimeTrackerBase
 
-@DETECTORS.register_module()
+@DETECTORS.register_module(force=True)
 class UniADTrack(MVXTwoStageDetector):
     """UniAD tracking part
     """

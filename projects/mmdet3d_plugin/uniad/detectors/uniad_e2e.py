@@ -13,7 +13,7 @@ from ..dense_heads.seg_head_plugin import IOU
 from .uniad_track import UniADTrack
 from mmdet.models.builder import build_head
 
-@DETECTORS.register_module()
+@DETECTORS.register_module(force=True)
 class UniAD(UniADTrack):
     """
     UniAD: Unifying Detection, Tracking, Segmentation, Motion Forecasting, Occupancy Prediction and Planning for Autonomous Driving

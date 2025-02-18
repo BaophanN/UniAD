@@ -27,7 +27,7 @@ def create_nuscenes_infos(root_path,
                           out_path,
                           can_bus_root_path,
                           info_prefix,
-                          version='v1.0-trainval',
+                          version='v1.0-mini',
                           max_sweeps=10):
     """Create info file of nuscene dataset.
 

@@ -5,7 +5,7 @@ from einops import rearrange
 from mmdet3d.datasets.pipelines import LoadAnnotations3D
 import os
 
-@PIPELINES.register_module()
+@PIPELINES.register_module(force=True)
 class LoadMultiViewImageFromFilesInCeph(object):
     """Load multi channel images from a list of separate channel files.
 
@@ -50,6 +50,7 @@ class LoadMultiViewImageFromFilesInCeph(object):
                 img_bytes = self.file_client.get(img_path)
                 img = mmcv.imfrombytes(img_bytes)
             elif self.file_client_args['backend'] == 'disk':
+                # print('######img_path',img_path)
                 img = mmcv.imread(img_path, self.color_type)
             images_multiView.append(img)
         # img is of shape (h, w, c, num_views)
@@ -82,7 +83,7 @@ class LoadMultiViewImageFromFilesInCeph(object):
         return repr_str
 
 
-@PIPELINES.register_module()
+@PIPELINES.register_module(force=True)
 class LoadAnnotations3D_E2E(LoadAnnotations3D):
     """Load Annotations3D.
 

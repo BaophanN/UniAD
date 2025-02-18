@@ -6,7 +6,7 @@ from projects.mmdet3d_plugin.core.bbox.util import normalize_bbox, denormalize_b
 from mmdet3d.core import xywhr2xyxyr
 from mmcv.ops import nms_bev
 
-@BBOX_CODERS.register_module()
+@BBOX_CODERS.register_module(force=True)
 class DETRTrack3DCoder(BaseBBoxCoder):
     """Bbox coder for DETR3D.
     Args:

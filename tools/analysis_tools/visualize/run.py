@@ -7,6 +7,8 @@ import numpy as np
 import mmcv
 import matplotlib
 import matplotlib.pyplot as plt
+import sys 
+sys.path.insert(0,'/workspace/source/UniAD')
 from nuscenes import NuScenes
 from nuscenes.prediction import PredictHelper, convert_local_coords_to_global
 from nuscenes.utils.geometry_utils import view_points, box_in_image, BoxVisibility, transform_matrix

@@ -1,6 +1,7 @@
 _base_ = ["../_base_/datasets/nus-3d.py",
           "../_base_/default_runtime.py"]
-
+# _base_ = []
+# custom_imports = dict(imports=['plugin.LaneSegNet.bevformer', 'plugin.LaneSegNet.lanesegnet'])
 # Update-2023-06-12: 
 # [Enhance] Update some freezing args of UniAD 
 # [Bugfix] Reproduce the from-scratch results of stage1
@@ -359,11 +360,14 @@ model = dict(
     ),
 )
 dataset_type = "NuScenesE2EDataset"
-data_root = "data/nuscenes/"
+data_root = "data/nuscenes"
 info_root = "data/infos/"
+# data_root = "/workspace/source/UniAD/data/nuscenes/"
+# info_root = "/workspace/source/UniAD/data/infos/"
+
 file_client_args = dict(backend="disk")
 ann_file_train=info_root + f"nuscenes_infos_temporal_train.pkl"
-ann_file_val=info_root + f"nuscenes_infos_temporal_val.pkl"
+ann_file_val=info_root + f"nuscenesinfos_temporal_val.pkl"
 ann_file_test=info_root + f"nuscenes_infos_temporal_val.pkl"
 
 
