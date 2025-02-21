@@ -114,6 +114,7 @@ class PerceptionTransformer(BaseModule):
         bev_queries = bev_queries.unsqueeze(1).repeat(1, bs, 1)
         bev_pos = bev_pos.flatten(2).permute(2, 0, 1)
         # obtain rotation angle and shift with ego motion
+        
         delta_x = np.array([each['can_bus'][0]
                            for each in img_metas])
         delta_y = np.array([each['can_bus'][1]
@@ -149,13 +150,17 @@ class PerceptionTransformer(BaseModule):
                     prev_bev[:, i] = tmp_prev_bev[:, 0]
 
         # add can bus signals
+        # convert can_bus into into tensor with the same data type as bev_queries 
         can_bus = bev_queries.new_tensor(
             [each['can_bus'] for each in img_metas])  # [:, :]
+        # pass the can_bus tensor through an MLP to encode the CAN information into a feature vector  
         can_bus = self.can_bus_mlp(can_bus)[None, :, :]
+
         bev_queries = bev_queries + can_bus * self.use_can_bus
 
         feat_flatten = []
-        spatial_shapes = []
+        spatial_shapes = [] # save the height and width for each level 
+        # mlvl_feats contains multi-scale feature maps from different levels in the FPN 
         for lvl, feat in enumerate(mlvl_feats):
             bs, num_cam, c, h, w = feat.shape
             spatial_shape = (h, w)
