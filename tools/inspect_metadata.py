@@ -33,7 +33,7 @@ with open(output_txt_path, "w") as f:
         f.write(f"  Token: {meta['token']}\n")
         f.write(f"  Scene Token: {meta['scene_token']}\n")
         f.write(f"  Sweeps: {meta['sweeps']}\n")
-        f.write(f"  cams CAM_FRONT: {meta['cams']['CAM_FRONT']}\n")
+        f.write(f"  cams: {meta['cams']}\n")
         f.write(f"  Timestamp: {meta['timestamp']}\n")
         f.write(f"  Frame Index: {meta['frame_idx']}\n")
         f.write(f"  Previous Sample: {meta['prev']}\n")
