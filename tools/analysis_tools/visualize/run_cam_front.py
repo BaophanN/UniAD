@@ -308,7 +308,7 @@ def main(args):
         show_sdc_traj=False
     )
 
-    viser = Visualizer(version='v1.0-mini', predroot=args.predroot, dataroot='data/nuscenes', **render_cfg)
+    viser = Visualizer(version='v1.0-mini', predroot=args.predroot, dataroot='data/nuscenes-modify-CAM_FRONT', **render_cfg)
 
     if not os.path.exists(args.out_folder):
         os.makedirs(args.out_folder)
