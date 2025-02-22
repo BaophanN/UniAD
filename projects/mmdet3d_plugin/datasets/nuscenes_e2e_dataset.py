@@ -133,12 +133,64 @@ class NuScenesE2EDataset(NuScenesDataset):
         self.occ_filter_invalid_sample = occ_filter_invalid_sample
         self.occ_filter_by_valid_flag = occ_filter_by_valid_flag
         self.occ_only_total_frames = 7  # NOTE: hardcode, not influenced by planning
+        self.colmap_dict = self._load_colmap_poses()
+    def _load_colmap_poses(self, colmap_output_file="/workspace/datasets/colmap/sparse/0/images.txt"):
+        """
+        Load pose data from a COLMAP output file.
+        The file is expected to have a header with comment lines,
+        followed by two lines per image:
+        - The first line of each pair contains pose data:
+            IMAGE_ID, QW, QX, QY, QZ, TX, TY, TZ, CAMERA_ID, NAME
+        - The second line contains 2D keypoints (which will be skipped)
+        
+        :param file_path: Path to the COLMAP output .txt file.
+        :return: List of dictionaries with pose data.
+        """
+        # poses = []
+
+        poses = {}
+        with open(colmap_output_file, 'r') as f:
+            lines = f.readlines()
+
+        # Filter out comment and empty lines
+        data_lines = [line.strip() for line in lines if line.strip() and not line.startswith('#')]
+        
+        # Since the data is arranged in pairs (pose line, then keypoints line),
+        # iterate with a step of 2 to process only the pose lines.
+        for i in range(0, len(data_lines), 2):
+
+            pose_line = data_lines[i]
+            tokens = pose_line.split()
+            # Expecting at least 10 tokens: IMAGE_ID, QW, QX, QY, QZ, TX, TY, TZ, CAMERA_ID, NAME
+            if len(tokens) < 10:
+                continue
+            
+            # image_id = tokens[0]
+            qw, qx, qy, qz = map(float, tokens[1:5])
+            tx, ty, tz = map(float, tokens[5:8])
+            # camera_id = tokens[8]
+            name = tokens[9]
+            
+            pose_data = {
+                # 'image_id': image_id,
+                'rotation': (qw, qx, qy, qz),
+                'translation': (tx, ty, tz),
+                # 'camera_id': camera_id,
+                # 'name': name
+            }
+            poses[name] = pose_data
+            # poses.append(pose_data)
+            # if i == 10: 
+            #     break
+            
+        return poses
 
     def __len__(self):
         if not self.is_debug:
             return len(self.data_infos)
         else:
             return self.len_debug
+
 
     def load_annotations(self, ann_file):
         """Load annotations from ann_file.
@@ -554,9 +606,16 @@ class NuScenesE2EDataset(NuScenesDataset):
             input_dict['sdc_planning'] = input_dict['ann_info']['sdc_planning']
             input_dict['sdc_planning_mask'] = input_dict['ann_info']['sdc_planning_mask']
             input_dict['command'] = input_dict['ann_info']['command']
+        # need to overwrite right here 
+        filename = osp.basename(input_dict['img_filename'][0])
+        if filename in self.colmap_dict:
+            pose = self.colmap_dict[filename]
+            rotation = Quaternion(pose['rotation'])
+            translation = pose['translation']
+        else: 
+            rotation = Quaternion(input_dict['ego2global_rotation'])
+            translation = input_dict['ego2global_translation']
 
-        rotation = Quaternion(input_dict['ego2global_rotation'])
-        translation = input_dict['ego2global_translation']
         can_bus = input_dict['can_bus']
         can_bus[:3] = translation
         can_bus[3:7] = rotation
@@ -565,6 +624,10 @@ class NuScenesE2EDataset(NuScenesDataset):
             patch_angle += 360
         can_bus[-2] = patch_angle / 180 * np.pi
         can_bus[-1] = patch_angle
+
+
+
+
 
         # TODO: Warp all those below occupancy-related codes into a function
         prev_indices, future_indices = self.occ_get_temporal_indices(
