@@ -51,17 +51,15 @@ def load_colmap_poses(file_path):
 
 def colmap_to_nuscenes(colmap_rotation, colmap_translation):
     qw, qx, qy, qz = colmap_rotation 
-    R = Rotation.from_quat([qx,qy,qz,qw]).as_matrix() 
+    R = Quaternion(qw,qx,qy,qz).rotation_matrix 
 
     # Compute actual ego position (translation) in world coordinates 
     T = np.array(colmap_translation)  # (TX, TY, TZ)
-    ego2global_translation = -R.T @ T # Correct position in world space 
+    ego2global_translation = (-R.T @ T).tolist() # Correct position in world space 
 
     # Compute ego to global rotation (invert COLMAP's rotation) 
     R_ego2global = R.T 
-    ego2global_rotation = Rotation.from_matrix(R_ego2global).as_quat() 
-
-    ego2global_rotation = ego2global_rotation[[3,0,1,2]] 
+    ego2global_rotation = Quaternion(matrix=R_ego2global)
     return ego2global_translation, ego2global_rotation
 
 
@@ -83,11 +81,12 @@ def update_can_bus(input_dict, colmap_poses):
 #     print(pose)
 #     print('\n')
 # Example COLMAP pose
-colmap_quaternion = (0.966281, -0.121643, 0.226905, 0.004220)  # (QW, QX, QY, QZ)
-colmap_translation = (-2.272727, -0.459435, 5.525815)  # (TX, TY, TZ)
+if __name__ == "__main__":
+    colmap_quaternion = (0.966281, -0.121643, 0.226905, 0.004220)  # (QW, QX, QY, QZ)
+    colmap_translation = (-2.272727, -0.459435, 5.525815)  # (TX, TY, TZ)
 
-# Convert to NuScenes format
-ego2global_translation, ego2global_rotation = colmap_to_nuscenes(colmap_quaternion, colmap_translation)
+    # Convert to NuScenes format
+    ego2global_translation, ego2global_rotation = colmap_to_nuscenes(colmap_quaternion, colmap_translation)
 
-print("Ego2Global Translation:", ego2global_translation, type(ego2global_translation))
-print("Ego2Global Rotation:", ego2global_rotation, type(ego2global_rotation))
+    print("Ego2Global Translation:", ego2global_translation, type(ego2global_translation))
+    print("Ego2Global Rotation:", ego2global_rotation, type(ego2global_rotation))
