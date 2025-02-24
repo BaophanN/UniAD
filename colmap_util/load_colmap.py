@@ -1,6 +1,5 @@
 import numpy as np 
-from nuscenes.eval.common.utils import quaternion_yaw, Quaternion
-from scipy.spatial.transform import Rotation
+from nuscenes.eval.common.utils import Quaternion
 def load_colmap_poses(file_path):
     """
     Load pose data from a COLMAP output file.
