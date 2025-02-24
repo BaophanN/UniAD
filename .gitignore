@@ -7,8 +7,10 @@ vids/
 *.so
 
 # Distribution / packaging
+CAM_FRONT/
 frames_from_vid/
 .dist_test/
+*.mp4
 *.avi
 ckpts/
 data
